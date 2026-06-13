@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mood Closet · Caja de Feria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --crema:#F4EFE6;--papel:#FBF8F2;--tinta:#241E1C;--vino:#7A2230;
+  --vino-claro:#A24251;--rosa:#D9B8B0;--verde:#3B6B4F;--oro:#B8893B;
+  --linea:#E0D7C8;--gris:#8C8278;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--crema);color:var(--tinta);line-height:1.5;-webkit-font-smoothing:antialiased}
+::selection{background:var(--vino);color:var(--crema)}
+
+.syncbar{display:flex;align-items:center;gap:10px;padding:9px 28px;font-size:12.5px;font-weight:600;
+  background:var(--tinta);color:rgba(244,239,230,.7);position:sticky;top:0;z-index:50}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:.3s;background:#888}
+.dot.ok{background:#5cb85c;box-shadow:0 0 6px #5cb85c}
+.dot.err{background:#d9534f}
+.dot.spin{background:var(--oro);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.app{display:grid;grid-template-columns:1fr 372px;min-height:calc(100vh - 36px)}
+.left{min-width:0}
+.cart-col{background:var(--tinta);color:var(--crema);position:sticky;top:36px;
+  height:calc(100vh - 36px);display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.15)}
+
+header{background:var(--tinta);color:var(--crema);padding:26px 30px 22px;position:relative;overflow:hidden}
+header::after{content:'';position:absolute;right:-50px;top:-50px;width:200px;height:200px;
+  border:1px solid rgba(244,239,230,.1);border-radius:50%}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,36px);letter-spacing:-.02em}
+.brand .tag{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--rosa);font-weight:600}
+.sub{margin-top:8px;font-size:13px;color:rgba(244,239,230,.6);max-width:520px}
+
+.tabs{display:flex;gap:2px;padding:0 30px;background:var(--tinta);position:sticky;top:36px;z-index:40;flex-wrap:wrap}
+.tab{appearance:none;border:none;background:transparent;cursor:pointer;font-family:'Inter';
+  font-size:13px;font-weight:600;color:rgba(244,239,230,.5);padding:13px 16px 15px;
+  border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
+.tab:hover{color:var(--crema)}
+.tab.active{color:var(--crema);border-bottom-color:var(--vino-claro)}
+.tab .pill{display:inline-block;margin-left:5px;font-family:'JetBrains Mono';font-size:10px;
+  background:rgba(244,239,230,.12);padding:2px 6px;border-radius:20px;vertical-align:middle}
+.tab.active .pill{background:var(--vino)}
+
+.wrap{padding:22px 30px 60px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.search{flex:1;min-width:190px;position:relative}
+.search input{width:100%;font-family:'Inter';font-size:14px;padding:10px 14px 10px 38px;
+  border:1px solid var(--linea);border-radius:10px;background:var(--papel);color:var(--tinta);transition:.15s}
+.search input:focus{outline:none;border-color:var(--vino-claro);box-shadow:0 0 0 3px rgba(122,34,48,.08)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4}
+.filtros{display:flex;gap:5px;flex-wrap:wrap}
+.chip{appearance:none;border:1px solid var(--linea);background:var(--papel);cursor:pointer;
+  font-family:'Inter';font-size:12px;font-weight:500;color:var(--gris);padding:7px 12px;
+  border-radius:30px;transition:.15s;white-space:nowrap}
+.chip:hover{border-color:var(--vino-claro);color:var(--vino)}
+.chip.on{background:var(--vino);border-color:var(--vino);color:var(--crema)}
+.chip.estado{border-style:dashed}
+.addprod{appearance:none;border:1px solid var(--vino);background:var(--vino);color:#fff;cursor:pointer;
+  font-family:'Inter';font-weight:600;font-size:13px;padding:9px 15px;border-radius:10px;transition:.15s;white-space:nowrap}
+.addprod:hover{background:var(--vino-claro)}
+
+.sellerhead{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.avatar{width:48px;height:48px;border-radius:50%;background:var(--vino);color:var(--crema);
+  display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-weight:600;font-size:18px;flex-shrink:0}
+.sellerhead h2{font-family:'Fraunces',serif;font-weight:600;font-size:23px}
+.sellerhead .meta{font-size:13px;color:var(--gris)}
+.minis{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.mini{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:8px 14px;text-align:right;min-width:90px}
+.mini .lbl{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--gris);font-weight:600}
+.mini .val{font-family:'Fraunces',serif;font-weight:600;font-size:17px;margin-top:2px}
+.mini.eft .val{color:var(--verde)}
+.mini.tr  .val{color:var(--oro)}
+
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.item{background:var(--papel);border:1px solid var(--linea);border-radius:13px;padding:13px 14px;
+  display:flex;flex-direction:column;transition:.15s;position:relative}
+.item.vendido{border-color:var(--verde);background:linear-gradient(180deg,rgba(59,107,79,.06),var(--papel))}
+.item.incart{border-color:var(--vino);box-shadow:0 0 0 2px rgba(122,34,48,.15)}
+.nom{font-weight:600;font-size:14px;line-height:1.3}
+.det{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;
+  background:var(--crema);color:var(--gris);border:1px solid var(--linea)}
+.badge.cat{background:rgba(122,34,48,.07);color:var(--vino);border-color:rgba(122,34,48,.15)}
+.badge.sold{background:var(--verde);color:#fff;border-color:var(--verde)}
+.badge.nuevo{background:rgba(184,137,59,.13);color:var(--oro);border-color:rgba(184,137,59,.3)}
+.foot{margin-top:auto;padding-top:11px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.precio{font-family:'Fraunces',serif;font-weight:600;font-size:17px;white-space:nowrap}
+.add{appearance:none;border:1px solid var(--vino);background:transparent;color:var(--vino);cursor:pointer;
+  font-family:'Inter';font-weight:600;font-size:12px;padding:8px 13px;border-radius:9px;transition:.15s;white-space:nowrap}
+.add:hover,.add.incart{background:var(--vino);color:#fff}
+.add.undo{border-color:var(--gris);color:var(--gris)}
+.add.undo:hover{background:var(--gris);color:#fff}
+.soldby{font-size:11px;color:var(--gris);margin-top:6px}
+/* edit btn */
+.editbtn{position:absolute;top:10px;right:10px;appearance:none;border:none;background:transparent;
+  cursor:pointer;color:var(--gris);font-size:15px;padding:2px 4px;border-radius:6px;transition:.15s;line-height:1}
+.editbtn:hover{background:var(--linea);color:var(--tinta)}
+/* edit form inline */
+.editform{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--linea);gap:8px;flex-direction:column}
+.editform.open{display:flex}
+.editrow{display:flex;gap:7px;align-items:center}
+.editrow label{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris);font-weight:600;min-width:48px}
+.editrow input{flex:1;font-family:'Inter';font-size:13px;padding:7px 10px;border:1px solid var(--linea);
+  border-radius:8px;background:var(--crema);color:var(--tinta)}
+.editrow input:focus{outline:none;border-color:var(--vino-claro)}
+.editactions{display:flex;gap:7px}
+.savebtn{appearance:none;border:none;background:var(--vino);color:#fff;cursor:pointer;
+  font-family:'Inter';font-weight:600;font-size:12px;padding:7px 14px;border-radius:8px;transition:.15s;flex:1}
+.savebtn:hover{background:var(--vino-claro)}
+.cancelbtn{appearance:none;border:1px solid var(--linea);background:transparent;color:var(--gris);cursor:pointer;
+  font-family:'Inter';font-weight:600;font-size:12px;padding:7px 12px;border-radius:8px;transition:.15s}
+.cancelbtn:hover{border-color:var(--vino);color:var(--vino)}
+
+.prodform{max-height:0;overflow:hidden;transition:max-height .28s ease,margin .28s;margin:0}
+.prodform.open{max-height:440px;margin:0 0 18px}
+.pf-grid{background:var(--papel);border:1px solid var(--linea);border-radius:13px;padding:16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pf-field{display:flex;flex-direction:column;gap:4px}
+.pf-field label{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris);font-weight:600}
+.pf-field input{font-family:'Inter';font-size:13px;padding:9px 11px;border:1px solid var(--linea);
+  border-radius:9px;background:var(--crema);color:var(--tinta)}
+.pf-field input:focus{outline:none;border-color:var(--vino-claro)}
+.pf-field input:disabled{opacity:.6}
+.pf-actions{display:flex;gap:8px;margin-top:10px}
+.pf-save{appearance:none;border:none;background:var(--vino);color:#fff;cursor:pointer;
+  font-family:'Inter';font-weight:600;font-size:13px;padding:10px 20px;border-radius:9px;transition:.15s}
+.pf-save:hover{background:var(--vino-claro)}
+.pf-cancel{appearance:none;border:1px solid var(--linea);background:transparent;color:var(--gris);
+  cursor:pointer;font-family:'Inter';font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;transition:.15s}
+.pf-cancel:hover{border-color:var(--vino);color:var(--vino)}
+@media(max-width:560px){.pf-grid{grid-template-columns:1fr}}
+
+.cart-h{padding:20px 22px 14px;border-bottom:1px solid rgba(244,239,230,.12)}
+.cart-h .ct{font-family:'Fraunces';font-weight:600;font-size:20px;display:flex;align-items:center;gap:8px}
+.cnt{font-family:'JetBrains Mono';font-size:11px;background:var(--vino);padding:3px 8px;border-radius:20px}
+.hint{font-size:11px;color:rgba(244,239,230,.48);margin-top:3px}
+.cart-items{flex:1;overflow-y:auto;padding:8px 14px}
+.cart-items::-webkit-scrollbar{width:6px}
+.cart-items::-webkit-scrollbar-thumb{background:rgba(244,239,230,.18);border-radius:10px}
+.ci{display:flex;gap:9px;padding:10px 6px;border-bottom:1px solid rgba(244,239,230,.07);align-items:flex-start}
+.cinfo{flex:1;min-width:0}
+.cn{font-size:13px;font-weight:600;line-height:1.2}
+.cm{font-size:11px;color:rgba(244,239,230,.48);margin-top:2px}
+.cp{font-family:'JetBrains Mono';font-size:13px;font-weight:600;white-space:nowrap}
+.rem{appearance:none;border:none;background:transparent;color:rgba(244,239,230,.38);
+  cursor:pointer;font-size:18px;line-height:1;padding:0 2px;transition:.15s}
+.rem:hover{color:var(--rosa)}
+.cart-empty{text-align:center;padding:48px 20px;color:rgba(244,239,230,.4);font-size:13px}
+.cart-empty .ico{font-size:32px;opacity:.35;margin-bottom:10px}
+.cart-f{border-top:1px solid rgba(244,239,230,.12);padding:14px 20px 18px}
+.paysel{display:flex;gap:7px;margin-bottom:11px}
+.paysel button{flex:1;appearance:none;border:1px solid rgba(244,239,230,.2);background:transparent;
+  color:rgba(244,239,230,.65);cursor:pointer;font-family:'Inter';font-weight:600;font-size:13px;
+  padding:10px;border-radius:10px;transition:.15s}
+.paysel button.on{background:var(--crema);color:var(--tinta);border-color:var(--crema)}
+.totrow{display:flex;justify-content:space-between;align-items:baseline;margin:5px 0 13px}
+.totrow .tl{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:rgba(244,239,230,.5);font-weight:600}
+.totrow .tv{font-family:'Fraunces';font-weight:700;font-size:28px;color:var(--rosa)}
+.finbtn{width:100%;appearance:none;border:none;background:var(--vino);color:#fff;cursor:pointer;
+  font-family:'Inter';font-weight:700;font-size:15px;padding:13px;border-radius:10px;transition:.15s}
+.finbtn:hover{background:var(--vino-claro)}
+.finbtn:disabled{background:rgba(244,239,230,.1);color:rgba(244,239,230,.3);cursor:not-allowed}
+.clearcart{width:100%;appearance:none;border:none;background:transparent;
+  color:rgba(244,239,230,.4);cursor:pointer;font-size:12px;font-weight:600;padding:8px;margin-top:4px}
+.clearcart:hover{color:var(--rosa)}
+
+.dashgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:20px}
+.dcard{background:var(--papel);border:1px solid var(--linea);border-radius:14px;padding:18px 20px}
+.dcard .dh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.dcard .av{width:34px;height:34px;border-radius:50%;background:var(--vino);color:var(--crema);
+  display:flex;align-items:center;justify-content:center;font-family:'Fraunces';font-weight:600;font-size:13px}
+.dcard h3{font-family:'Fraunces';font-weight:600;font-size:16px}
+.drow{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--linea)}
+.drow:last-child{border-bottom:none}
+.drow .k{color:var(--gris)}
+.drow .vv{font-weight:600;font-family:'JetBrains Mono';font-size:12px}
+.drow.tot{margin-top:3px;padding-top:7px;border-top:2px solid var(--tinta);border-bottom:none}
+.drow.tot .vv{font-family:'Fraunces';font-size:15px;color:var(--vino)}
+.gastos-box{background:var(--papel);border:1px solid var(--linea);border-radius:14px;padding:20px}
+.gastos-box h3{font-family:'Fraunces';font-weight:600;font-size:17px;margin-bottom:12px}
+.gline{display:flex;gap:7px;align-items:center;margin-bottom:8px}
+.gln{flex:1;font-family:'Inter';font-size:13px;padding:7px 10px;border:1px solid var(--linea);
+  border-radius:9px;background:var(--crema);color:var(--tinta)}
+.gln:focus{outline:none;border-color:var(--vino-claro)}
+.gnum{width:110px;font-family:'JetBrains Mono';font-size:13px;padding:7px 9px;
+  border:1px solid var(--linea);border-radius:9px;background:var(--crema);text-align:right;color:var(--tinta)}
+.gnum:focus{outline:none;border-color:var(--vino-claro)}
+.gldel{appearance:none;border:none;background:transparent;color:var(--gris);cursor:pointer;font-size:19px;padding:0 3px;transition:.15s}
+.gldel:hover{color:var(--vino)}
+.addline{appearance:none;border:1px dashed var(--vino-claro);background:transparent;color:var(--vino);
+  cursor:pointer;font-family:'Inter';font-weight:600;font-size:12px;padding:8px;border-radius:9px;
+  width:100%;margin:3px 0 5px;transition:.15s}
+.addline:hover{background:rgba(122,34,48,.06)}
+.expbtn{appearance:none;border:1px solid var(--tinta);background:var(--tinta);color:var(--crema);
+  cursor:pointer;font-family:'Inter';font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;transition:.15s}
+.expbtn:hover{background:var(--vino);border-color:var(--vino)}
+
+.empty{text-align:center;padding:48px 20px;color:var(--gris)}
+.empty .big{font-family:'Fraunces';font-size:21px;color:var(--tinta);margin-bottom:5px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(18px);
+  background:var(--verde);color:#fff;padding:12px 24px;border-radius:12px;font-weight:600;font-size:14px;
+  box-shadow:0 6px 28px rgba(0,0,0,.22);opacity:0;pointer-events:none;transition:.22s;z-index:300}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.cartbar{display:none}
+@media(max-width:980px){
+  .app{grid-template-columns:1fr}
+  .cart-col{position:fixed;top:0;right:0;width:min(380px,90vw);height:100vh;z-index:120;
+    transform:translateX(100%);transition:transform .26s ease}
+  .cart-col.open{transform:translateX(0)}
+  .cartbar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:90;background:var(--tinta);
+    color:var(--crema);padding:12px 18px;align-items:center;gap:12px;box-shadow:0 -4px 18px rgba(0,0,0,.18)}
+  .cartbar .cbinfo{flex:1}
+  .cartbar .cbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(244,239,230,.48);font-weight:600}
+  .cartbar .cbv{font-family:'Fraunces';font-weight:700;font-size:21px;color:var(--rosa)}
+  .cartbar .cbbtn{appearance:none;border:none;background:var(--vino);color:#fff;cursor:pointer;
+    font-family:'Inter';font-weight:700;font-size:14px;padding:12px 20px;border-radius:10px}
+  .wrap{padding-bottom:85px}
+  .cart-close{display:block!important}
+}
+.cart-close{display:none;position:absolute;top:16px;right:16px;appearance:none;border:none;
+  background:rgba(244,239,230,.1);color:var(--crema);cursor:pointer;width:32px;height:32px;
+  border-radius:50%;font-size:17px}
+@media(max-width:560px){
+  .syncbar,.wrap{padding-left:16px;padding-right:16px}
+  header{padding:20px 16px}
+  .tabs{padding:0 8px}
+  .tab{padding:10px 9px 12px;font-size:11.5px}
+  .minis{margin-left:0;width:100%}
+  .mini{flex:1}
+  .wrap{padding:16px 16px 85px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="syncbar">
+  <div class="dot spin" id="syncDot"></div>
+  <span id="syncTxt">Conectando...</span>
+</div>
+
+<div class="app">
+  <div class="left">
+    <header>
+      <div class="brand"><h1>Mood Closet</h1><span class="tag">Caja de feria</span></div>
+      <p class="sub">Agrega productos al carrito, cobra un total. Cada prenda se acredita a su duena. Sincronizado en tiempo real.</p>
+    </header>
+    <nav class="tabs" id="tabs"></nav>
+    <main class="wrap" id="main"></main>
+  </div>
+  <aside class="cart-col" id="cartCol">
+    <button class="cart-close" id="cartClose">&#215;</button>
+    <div class="cart-h">
+      <div class="ct">&#128717; Compra actual <span class="cnt" id="cartCnt">0</span></div>
+      <div class="hint">Lo que la clienta lleva en esta venta</div>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-f">
+      <div class="paysel">
+        <button id="payEft" class="on">Efectivo</button>
+        <button id="payTr">Transferencia</button>
+      </div>
+      <div class="totrow"><span class="tl">Total a cobrar</span><span class="tv" id="cartTot">$0</span></div>
+      <button class="finbtn" id="finBtn" disabled>Finalizar compra</button>
+      <button class="clearcart" id="clearCart">Vaciar carrito</button>
+    </div>
+  </aside>
+</div>
+
+<div class="cartbar">
+  <div class="cbinfo">
+    <div class="cbl">Compra &middot; <span id="cbCnt">0</span> items</div>
+    <div class="cbv" id="cbTot">$0</div>
+  </div>
+  <button class="cbbtn" id="cbOpen">Ver carrito</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+var SURL='https://wfmrhbkpxntlujzunzkx.supabase.co', SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmbXJoYmtweG50bHVqenVuemt4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzMzE3NzksImV4cCI6MjA5NjkwNzc3OX0.dK3rYhCIzTZf1A80jpGS5MTaEtGXjYzC0zoHbN7NZF4';
+var sb=supabase.createClient(SURL,SKEY);
+var DATA={"Lu Laguna": [{"p": "Sweater rojo", "t": "S", "m": 30000, "c": "Abrigos"}, {"p": "Blazer serpiente", "t": "M", "m": 15000, "c": "Abrigos"}, {"p": "Campera gris", "t": "Talle S", "m": 25000, "c": "Abrigos"}, {"p": "Campera beige", "t": "Talle S", "m": 20000, "c": "Abrigos"}, {"p": "Blazer rojo delaostia", "t": "Talle 1", "m": 30000, "c": "Abrigos"}, {"p": "Campera Jean tachas", "t": "Talle S", "m": 30000, "c": "Abrigos"}, {"p": "Buzo naranja undefined", "t": "Talle S", "m": 25000, "c": "Abrigos"}, {"p": "Conjunto rojo", "t": "Talle 100", "m": 15000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "lentes de sol", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "lentes de sol", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Bombacha rosa", "t": "Talle 1", "m": 5000, "c": "Accesorios"}, {"p": "Bombacha roja tul", "t": "Talle 1", "m": 5000, "c": "Accesorios"}, {"p": "Bombacha encaje negra", "t": "Talle 1", "m": 5000, "c": "Accesorios"}, {"p": "Bombacha encaje roja", "t": "Talle 1", "m": 5000, "c": "Accesorios"}, {"p": "Catera brillos", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Bikini negra", "t": "talle 2", "m": 15000, "c": "Bikini"}, {"p": "Pantalon beige", "t": "Talle S", "m": 10000, "c": "Body"}, {"p": "Body negro tul", "t": "Talle S", "m": 8000, "c": "Body"}, {"p": "Buzo rosa ginebra", "t": "Talle 2", "m": 25000, "c": "Decoracion"}, {"p": "Conjunto blanco", "t": "100", "m": 18000, "c": "Lenceria"}, {"p": "Conjunto negro", "t": "100", "m": 18000, "c": "Lenceria"}, {"p": "conjunto rojo", "t": "95", "m": 18000, "c": "Lenceria"}, {"p": "conjunto rojo", "t": "95", "m": 18000, "c": "Lenceria"}, {"p": "conjunto azul", "t": "95", "m": 18000, "c": "Lenceria"}, {"p": "conjunto rojo", "t": "85", "m": 18000, "c": "Lenceria"}, {"p": "conjunto rosa", "t": "95", "m": 18000, "c": "Lenceria"}, {"p": "Pantalón blanco", "t": "Talle 38/40", "m": 25000, "c": "Pantalon"}, {"p": "Pantalón negro rayado", "t": "Talle 36", "m": 10000, "c": "Pantalon"}, {"p": "Jean rapsodia", "t": "Talle 24", "m": 30000, "c": "Pantalon"}, {"p": "Catsuit estampa", "t": "Talle s", "m": 15000, "c": "Pantalon"}, {"p": "Mono rojo", "t": "Talle S", "m": 40000, "c": "Pantalon"}, {"p": "Pantalon blanco", "t": "Talle 36", "m": 25000, "c": "Pantalon"}, {"p": "Pantalon negro rayas", "t": "Talle 26", "m": 10000, "c": "Pantalon"}, {"p": "Pantalón rojo", "t": "Talle M", "m": 20000, "c": "Pantalon"}, {"p": "Pantalón negro", "t": "Talle M", "m": 15000, "c": "Pantalon"}, {"p": "Pantalón negro", "t": "Talle M", "m": 15000, "c": "Pantalon"}, {"p": "Pantalón negro brillos", "t": "Talle S", "m": 15000, "c": "Pantalon"}, {"p": "Pantalón brillos", "t": "Talle S", "m": 10000, "c": "Pantalon"}, {"p": "Catsuit negro", "t": "Talle S/M", "m": 20000, "c": "Pantalon"}, {"p": "Catsuit negro managas largas", "t": "Talle S", "m": 20000, "c": "Pantalon"}, {"p": "Cargo nude", "t": "Talle S", "m": 10000, "c": "Pantalon"}, {"p": "Pantalón rojo", "t": "Talle S", "m": 25000, "c": "Pantalon"}, {"p": "Jean ginebra", "t": "Talle S", "m": 25000, "c": "Pantalon"}, {"p": "Pantalón rojo Victoria Tucci", "t": "Talle 1", "m": 20000, "c": "Pantalon"}, {"p": "Jean Desiderata", "t": "Talle 24", "m": 20000, "c": "Pantalon"}, {"p": "Pollera Hey Black", "t": "36", "m": 25000, "c": "Polleras"}, {"p": "Pollera rosa", "t": "Talle 1", "m": 15000, "c": "Polleras"}, {"p": "Pollera animal print", "t": "Talle 1", "m": 15000, "c": "Polleras"}, {"p": "Pollera short negro", "t": "Talle 1", "m": 10000, "c": "Polleras"}, {"p": "Blusa negra tul", "t": "S", "m": 10000, "c": "Remeras"}, {"p": "Set jogging azul", "t": "S", "m": 35000, "c": "Set"}, {"p": "Set brillos", "t": "Talle S", "m": 15000, "c": "Set"}, {"p": "Set brillos", "t": "Talle M", "m": 25000, "c": "Set"}, {"p": "Conjunto rosa", "t": "Talle 90", "m": 18000, "c": "Set"}, {"p": "Short blanco", "t": "Talle 24", "m": 10000, "c": "Shorts"}, {"p": "Short adidas lila", "t": "Talle XS", "m": 25000, "c": "Shorts"}, {"p": "Short marrón Top White", "t": "Talle 26", "m": 25000, "c": "Shorts"}, {"p": "Blusa blanca", "t": "Talle s", "m": 10000, "c": "Top"}, {"p": "Top verde", "t": "Talle S", "m": 5000, "c": "Top"}, {"p": "Top fucsia", "t": "Talle S", "m": 5000, "c": "Top"}, {"p": "Top engomado", "t": "Talle M", "m": 5000, "c": "Top"}, {"p": "Top rojo", "t": "Talle M", "m": 12000, "c": "Top"}, {"p": "Top hilo", "t": "Talle S", "m": 4000, "c": "Top"}, {"p": "Top blackmamba", "t": "Talle S", "m": 15000, "c": "Top"}, {"p": "Corset blanco", "t": "Talle S", "m": 15000, "c": "Top"}, {"p": "Top metalico", "t": "S", "m": 8000, "c": "Top"}, {"p": "Vestido plateado", "t": "S", "m": 8000, "c": "Vestidos"}, {"p": "Vestido negro", "t": "Talle s", "m": 8000, "c": "Vestidos"}, {"p": "Vestido blanco", "t": "Talle s", "m": 8000, "c": "Vestidos"}, {"p": "Vestido negro", "t": "Talle s", "m": 8000, "c": "Vestidos"}, {"p": "Vestido negro escote brillos", "t": "Talle S", "m": 12000, "c": "Vestidos"}, {"p": "Vestido negro", "t": "Talle S", "m": 10000, "c": "Vestidos"}, {"p": "Vestido blanco", "t": "Talle S", "m": 15000, "c": "Vestidos"}, {"p": "Vestido negro", "t": "Talle S", "m": 8000, "c": "Vestidos"}, {"p": "Plataformas rojas sarkany", "t": "37", "m": 25000, "c": "Zapatos"}, {"p": "Borcegos plateados Sarkany", "t": "38", "m": 30000, "c": "Zapatos"}, {"p": "Borcegos azules sofia sarkany", "t": "37", "m": 25000, "c": "Zapatos"}, {"p": "Plataformas serpiente rojas", "t": "37", "m": 20000, "c": "Zapatos"}, {"p": "Texanas verde lima", "t": "37", "m": 20000, "c": "Sin categoria"}, {"p": "conjunto jogging ginebra", "t": "S", "m": 30000, "c": "Sin categoria"}], "Barbi N": [{"p": "Camp deport rosa", "t": "1", "m": 5000, "c": "Abrigos"}, {"p": "Sweater blanco corto", "t": "S", "m": 8000, "c": "Abrigos"}, {"p": "Sweater rojo corto", "t": "S", "m": 10000, "c": "Abrigos"}, {"p": "Sweater negro corto", "t": "S", "m": 10000, "c": "Abrigos"}, {"p": "Buzo kappa", "t": "M", "m": 9000, "c": "Abrigos"}, {"p": "Sweater blanco y verde", "t": "U", "m": 9000, "c": "Abrigos"}, {"p": "Sweater negro y rojo", "t": "", "m": 9000, "c": "Abrigos"}, {"p": "Sweater gris cuestablanca", "t": "42", "m": 15000, "c": "Abrigos"}, {"p": "Sweater rayado azul", "t": "M/l", "m": 10000, "c": "Abrigos"}, {"p": "Cartera chartia negra", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Cartera negra", "t": "", "m": 9000, "c": "Accesorios"}, {"p": "Aros acero dorado", "t": "", "m": 6000, "c": "Accesorios"}, {"p": "Aros ac.dorado perlas", "t": "", "m": 6000, "c": "Accesorios"}, {"p": "Aros ac.dorado grandes", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Lentes miu miu amarillo", "t": "", "m": 20000, "c": "Accesorios"}, {"p": "Lentes miu miu azules", "t": "", "m": 20000, "c": "Accesorios"}, {"p": "Lentes amarillo grandes", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Lentes print", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Aros plata 925", "t": "", "m": 9000, "c": "Accesorios"}, {"p": "Cadena dorada ac.dorado", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Pulsera dorada ac.dorado", "t": "", "m": 7000, "c": "Accesorios"}, {"p": "Aro ángeles ac.dorado", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Bolso ACACIA azul", "t": "", "m": 22000, "c": "Accesorios"}, {"p": "Bikini flores", "t": "S", "m": 9000, "c": "Bikini"}, {"p": "Cartera guess", "t": "", "m": 60000, "c": "Accesorios"}, {"p": "Mochila Roxy", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Jackie Smith marrón", "t": "", "m": 45000, "c": "Accesorios"}, {"p": "Bikini print", "t": "90", "m": 20000, "c": "Bikini"}, {"p": "Bikini verde amarilla", "t": "90", "m": 8000, "c": "Bikini"}, {"p": "Bikini verde oliva", "t": "85", "m": 9000, "c": "Bikini"}, {"p": "Bikini negra", "t": "85", "m": 8000, "c": "Bikini"}, {"p": "Body negro pompavana", "t": "S", "m": 15000, "c": "Body"}, {"p": "Body negro recortes manga", "t": "S", "m": 15000, "c": "Body"}, {"p": "Body negro y plateado brillos", "t": "U", "m": 6000, "c": "Body"}, {"p": "Body negro tiras escote", "t": "U", "m": 7000, "c": "Body"}, {"p": "Body mangalarga recortes", "t": "", "m": 9000, "c": "Body"}, {"p": "Body negro cruzado", "t": "M", "m": 5000, "c": "Body"}, {"p": "Body negro bendito tiras", "t": "S", "m": 9000, "c": "Body"}, {"p": "Lenceria roja", "t": "90", "m": 4000, "c": "Lenceria"}, {"p": "Bermuda Rad", "t": "38", "m": 25000, "c": "Pantalon"}, {"p": "Pant ecocuero heyblack", "t": "36", "m": 40000, "c": "Pantalon"}, {"p": "Pantalón sastrero", "t": "M/38", "m": 25000, "c": "Pantalon"}, {"p": "Jean 47 street blanco", "t": "32", "m": 9000, "c": "Pantalon"}, {"p": "Mono jean rad", "t": "1", "m": 40000, "c": "Pantalon"}, {"p": "Calza Anna flores", "t": "1", "m": 8000, "c": "Pantalon"}, {"p": "Biker kappa gris", "t": "M", "m": 7000, "c": "Pantalon"}, {"p": "Biker rosa", "t": "2", "m": 5000, "c": "Pantalon"}, {"p": "Short nike negro", "t": "Xs", "m": 15000, "c": "Pantalon"}, {"p": "Short Lumavi jean", "t": "36", "m": 7000, "c": "Pantalon"}, {"p": "Short daze blanco", "t": "36", "m": 8000, "c": "Pantalon"}, {"p": "Jean tucci azul", "t": "34", "m": 10000, "c": "Pantalon"}, {"p": "Jean tucci negro", "t": "34", "m": 10000, "c": "Pantalon"}, {"p": "Jean 47 street blanco", "t": "32", "m": 8000, "c": "Pantalon"}, {"p": "Jean kosiuko azul", "t": "26", "m": 30000, "c": "Pantalon"}, {"p": "Jean kosiuko negro", "t": "28", "m": 30000, "c": "Pantalon"}, {"p": "Jean rapsodia nevado", "t": "44", "m": 20000, "c": "Pantalon"}, {"p": "Jean vitamina", "t": "40", "m": 15000, "c": "Pantalon"}, {"p": "Pantalón cuadros rojo", "t": "36", "m": 8000, "c": "Pantalon"}, {"p": "Jean wrangler óxido", "t": "42", "m": 10000, "c": "Pantalon"}, {"p": "Pollera ecocuero tabl", "t": "S", "m": 9000, "c": "Polleras"}, {"p": "Pollera ecocuero tubo", "t": "Xs", "m": 5000, "c": "Polleras"}, {"p": "Mini jean daze", "t": "36", "m": 9000, "c": "Polleras"}, {"p": "Mini isostasia negra", "t": "38", "m": 10000, "c": "Polleras"}, {"p": "Mini jean daze cinto", "t": "36", "m": 10000, "c": "Polleras"}, {"p": "Conjunto plateado brillos", "t": "S", "m": 10000, "c": "Polleras"}, {"p": "Mini blanca encaje", "t": "Xs", "m": 7000, "c": "Polleras"}, {"p": "Pollera negra tajo", "t": "U", "m": 7000, "c": "Polleras"}, {"p": "Pollera marrón tableada", "t": "M", "m": 20000, "c": "Polleras"}, {"p": "Pulsera marrón", "t": "", "m": 4000, "c": "Accesorios"}, {"p": "Top gris con aro", "t": "Xs", "m": 8000, "c": "Remeras"}, {"p": "Top xenona", "t": "S", "m": 8000, "c": "Remeras"}, {"p": "Top rusty marrón", "t": "S", "m": 15000, "c": "Remeras"}, {"p": "Corset top white", "t": "M", "m": 20000, "c": "Remeras"}, {"p": "Top nike blanco", "t": "M", "m": 30000, "c": "Remeras"}, {"p": "Remera Adidas blanca", "t": "S", "m": 30000, "c": "Remeras"}, {"p": "Set bendito negro", "t": "S", "m": 20000, "c": "Set"}, {"p": "Set beige pollera-top", "t": "S", "m": 9000, "c": "Set"}, {"p": "Short negro", "t": "Xs", "m": 6000, "c": "Shorts"}, {"p": "Cleaaing balm Coony", "t": "", "m": 25000, "c": "Skincare"}, {"p": "Anua 100 verde", "t": "", "m": 25000, "c": "Skincare"}, {"p": "Brazalete dorado", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Corsx clearifying tóner", "t": "", "m": 25000, "c": "Skincare"}, {"p": "Coony foaming cleanser", "t": "", "m": 20000, "c": "Skincare"}, {"p": "Coony aloe shooting gel", "t": "", "m": 15000, "c": "Skincare"}, {"p": "Centella skin1004 hyalu ci", "t": "", "m": 28000, "c": "Skincare"}, {"p": "Medicube pdrn pink", "t": "", "m": 28000, "c": "Skincare"}, {"p": "Victorias secret perfume", "t": "", "m": 30000, "c": "Skincare"}, {"p": "Aqua Dr althea", "t": "", "m": 8000, "c": "Skincare"}, {"p": "Cher multistick cherry", "t": "", "m": 8000, "c": "Skincare"}, {"p": "Autobronceante BB CARA", "t": "", "m": 28000, "c": "Skincare"}, {"p": "Serun skin booster", "t": "", "m": 6000, "c": "Skincare"}, {"p": "Blush brown bebé", "t": "", "m": 9000, "c": "Skincare"}, {"p": "Conjunto jogging print", "t": "", "m": 20000, "c": "Set"}, {"p": "Centella suncream 50", "t": "", "m": 30000, "c": "Skincare"}, {"p": "Anua 10 niacinamida rosa", "t": "", "m": 28000, "c": "Skincare"}, {"p": "Medicube contorno", "t": "", "m": 25000, "c": "Skincare"}, {"p": "Corset encaje negro", "t": "", "m": 9000, "c": "Top"}, {"p": "Top marrón v dorada", "t": "U", "m": 9000, "c": "Top"}, {"p": "Top negro brillos", "t": "", "m": 6000, "c": "Top"}, {"p": "Top negro mangas", "t": "U", "m": 5000, "c": "Top"}, {"p": "Top strapless argolla negro", "t": "U", "m": 6000, "c": "Top"}, {"p": "Top encaje mangalarga negro", "t": "U", "m": 7000, "c": "Top"}, {"p": "Top crudo elásticos", "t": "U", "m": 6000, "c": "Top"}, {"p": "Vest corto negro brill", "t": "S", "m": 10000, "c": "Vestidos"}, {"p": "Vest boho largo", "t": "S", "m": 20000, "c": "Vestidos"}, {"p": "Vest plateado brillo", "t": "S", "m": 35000, "c": "Vestidos"}, {"p": "Vest tejido marrón", "t": "S", "m": 8000, "c": "Vestidos"}, {"p": "Vestido Adidas lila", "t": "M", "m": 10000, "c": "Vestidos"}, {"p": "Vestido negro recortes", "t": "S", "m": 9000, "c": "Vestidos"}, {"p": "Vestido negro con brillo plateado", "t": "S", "m": 8000, "c": "Vestidos"}, {"p": "Vestido estrella negro", "t": "U", "m": 9000, "c": "Vestidos"}, {"p": "Vestido negro manga larga", "t": "", "m": 6000, "c": "Vestidos"}, {"p": "Zapatilla skechers Dlites", "t": "36", "m": 60000, "c": "Zapatos"}, {"p": "Zapatillas skechers blancas", "t": "36", "m": 40000, "c": "Zapatos"}, {"p": "Zapatillas kappa amarillas", "t": "36", "m": 35000, "c": "Zapatos"}, {"p": "Zapatilla skechers rosa", "t": "36", "m": 45000, "c": "Zapatos"}, {"p": "Zapatilla converse bordo", "t": "36", "m": 50000, "c": "Zapatos"}, {"p": "Zapatilla converse botita", "t": "36", "m": 60000, "c": "Zapatos"}, {"p": "Crocs marrones", "t": "36", "m": 38000, "c": "Zapatos"}, {"p": "Borcegos Lara casa", "t": "43", "m": 50000, "c": "Zapatos"}, {"p": "Borcegos marrón sarkany", "t": "38", "m": 30000, "c": "Zapatos"}, {"p": "Zapat converse botita plataforma", "t": "36.5", "m": 70000, "c": "Zapatos"}, {"p": "Neceser paco rabanne", "t": "", "m": 7000, "c": "Accesorios"}, {"p": "Cartera negra monedero", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Bolso violeta xl", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Bolso marrón xl", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Cartera chartia bolsillo", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Mochila vans fucsia", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Bandolera negra", "t": "", "m": 4000, "c": "Accesorios"}, {"p": "Botellero verde", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Sweater Paula rojo", "t": "S", "m": 8000, "c": "Abrigos"}, {"p": "Sweater rayado neg/blanc", "t": "S/m", "m": 10000, "c": "Abrigos"}, {"p": "Sweater mostaza desiderata", "t": "2", "m": 8000, "c": "Abrigos"}, {"p": "Poleron negro", "t": "M", "m": 5000, "c": "Abrigos"}, {"p": "Remera negra manga larga", "t": "S", "m": 5000, "c": "Remeras"}, {"p": "Mangalarga print", "t": "S", "m": 5000, "c": "Remeras"}, {"p": "Jogging Adidas negro", "t": "S", "m": 30000, "c": "Pantalon"}, {"p": "Pantalón ecocuero", "t": "M", "m": 8000, "c": "Pantalon"}, {"p": "Jean Zara negro", "t": "38", "m": 10000, "c": "Pantalon"}, {"p": "Corpiño vs negro", "t": "100", "m": 25000, "c": "Lenceria"}, {"p": "Corpiño vs rojo", "t": "100", "m": 25000, "c": "Lenceria"}, {"p": "Corpiño vs azul", "t": "90/95", "m": 20000, "c": "Lenceria"}, {"p": "Campera bomber ecocuero", "t": "S", "m": 25000, "c": "Abrigos"}, {"p": "Campera puffer negra", "t": "S", "m": 25000, "c": "Abrigos"}, {"p": "Camisa verde 47 street", "t": "1", "m": 15000, "c": "Abrigos"}, {"p": "Saco marrón soho", "t": "44", "m": 20000, "c": "Abrigos"}, {"p": "Sweater blanco tejido", "t": "S", "m": 6000, "c": "Abrigos"}, {"p": "Collar estrella", "t": "", "m": 3000, "c": "Accesorios"}, {"p": "Limpiador cetaphil", "t": "", "m": 20000, "c": "Skincare"}, {"p": "Sandalias crocs", "t": "35", "m": 30000, "c": "Zapatos"}, {"p": "Bikini rosa Anna", "t": "90/95", "m": 15000, "c": "Bikini"}, {"p": "Aros acero brillo", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Collar corazón dorado", "t": "", "m": 7000, "c": "Accesorios"}, {"p": "Hebillas Isidora", "t": "", "m": 6000, "c": "Accesorios"}], "Lu Relli": [{"p": "Saco negro encaje", "t": "Único", "m": 12000, "c": "Abrigos"}, {"p": "Buzo azul naranja", "t": "Único", "m": 25000, "c": "Abrigos"}, {"p": "Saco blanco volado", "t": "", "m": 20000, "c": "Abrigos"}, {"p": "Blazer corto negro", "t": "Único", "m": 15000, "c": "Abrigos"}, {"p": "Saco peludo blanco", "t": "Único", "m": 10000, "c": "Abrigos"}, {"p": "Blazer chocolate", "t": "S", "m": 15000, "c": "Abrigos"}, {"p": "Saco gris lana WANAMA", "t": "Único", "m": 20000, "c": "Abrigos"}, {"p": "sueter rosa POLO", "t": "XL", "m": 30000, "c": "Abrigos"}, {"p": "Buzo azul BASSET", "t": "M", "m": 30000, "c": "Abrigos"}, {"p": "sueter rojo volado manga", "t": "Único", "m": 15000, "c": "Abrigos"}, {"p": "Sueter ginebra blanco", "t": "", "m": 20000, "c": "Abrigos"}, {"p": "Sueter marrón cebra", "t": "Único", "m": 10000, "c": "Abrigos"}, {"p": "Sueter lila AKIABARA", "t": "1", "m": 25000, "c": "Abrigos"}, {"p": "Saco peludo blanco MADNESS", "t": "1", "m": 15000, "c": "Abrigos"}, {"p": "Sueter blanco GINEBRA corto", "t": "1", "m": 20000, "c": "Abrigos"}, {"p": "sueter zebra negro y marrón", "t": "único", "m": 10000, "c": "Abrigos"}, {"p": "Saco rapsodia celeste beige", "t": "", "m": 20000, "c": "Abrigos"}, {"p": "buzo rallado pullandbear", "t": "S M", "m": 25000, "c": "Abrigos"}, {"p": "Cartera roja", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Cartera negra bolsillos", "t": "", "m": 20000, "c": "Accesorios"}, {"p": "Lentes negros redondos ver", "t": "", "m": 10000, "c": "Accesorios"}, {"p": "Body encaje forever 21", "t": "S", "m": 15000, "c": "Body"}, {"p": "Corpiño Lili pink beige encaje", "t": "95", "m": 9000, "c": "Lenceria"}, {"p": "Corpiño Lili pink violeta", "t": "90", "m": 9000, "c": "Lenceria"}, {"p": "Corpiño Lili pink negro", "t": "90", "m": 9000, "c": "Lenceria"}, {"p": "Jean levis celeste", "t": "38", "m": 30000, "c": "Pantalon"}, {"p": "Jean celeste roto HYM", "t": "40", "m": 35000, "c": "Pantalon"}, {"p": "Bermuda Jean celeste", "t": "38", "m": 18000, "c": "Pantalon"}, {"p": "Palazo gris holgado", "t": "S", "m": 20000, "c": "Pantalon"}, {"p": "Pantalón cuero negro", "t": "Único", "m": 20000, "c": "Pantalon"}, {"p": "Calza negra cuero", "t": "Único", "m": 5000, "c": "Pantalon"}, {"p": "Jean ginebra azul oscuro", "t": "24", "m": 30000, "c": "Pantalon"}, {"p": "Pantalón negro y blanco forever", "t": "S", "m": 15000, "c": "Pantalon"}, {"p": "Pantalón sastrero negro", "t": "único", "m": 8000, "c": "Pantalon"}, {"p": "Pantalón sastr negro y blanco forever 21", "t": "S", "m": 10000, "c": "Pantalon"}, {"p": "Jean blanco RAPSODIA", "t": "24", "m": 15000, "c": "Pantalon"}, {"p": "Jean GINEBRA azul", "t": "Talle 24", "m": 25000, "c": "Pantalon"}, {"p": "Jean blanco rapsodia chupin", "t": "24", "m": 25000, "c": "Pantalon"}, {"p": "Jean cargo beige", "t": "28", "m": 15000, "c": "Pantalon"}, {"p": "Pollera marrón volados", "t": "Único", "m": 15000, "c": "Polleras"}, {"p": "Pollera encaje blanca ríe", "t": "38", "m": 15000, "c": "Polleras"}, {"p": "Pollera Jean blanco UMA", "t": "26", "m": 25000, "c": "Polleras"}, {"p": "Pollera larga tul cebra", "t": "M", "m": 25000, "c": "Polleras"}, {"p": "pollera red plateada", "t": "Único", "m": 20000, "c": "Polleras"}, {"p": "Pollera brodery blanca volado", "t": "Único", "m": 15000, "c": "Polleras"}, {"p": "pollera escocesa beige", "t": "XS", "m": 20000, "c": "Polleras"}, {"p": "Pollera satén rosa", "t": "M", "m": 15000, "c": "Polleras"}, {"p": "Camisa celeste corta volado", "t": "Único", "m": 15000, "c": "Remeras"}, {"p": "camisa celeste animal print", "t": "", "m": 18000, "c": "Remeras"}, {"p": "remera marrón bershka", "t": "único", "m": 20000, "c": "Remeras"}, {"p": "Chaleco checa negro", "t": "S", "m": 10000, "c": "Remeras"}, {"p": "Camisa celeste vintage", "t": "Único", "m": 10000, "c": "Remeras"}, {"p": "Chaleco gris", "t": "S", "m": 15000, "c": "Remeras"}, {"p": "Chaleco blanco", "t": "S", "m": 12000, "c": "Remeras"}, {"p": "Blusa marrón top volado", "t": "S", "m": 15000, "c": "Remeras"}, {"p": "Remera puma verde", "t": "M", "m": 15000, "c": "Remeras"}, {"p": "Camisa rosa markova", "t": "46", "m": 15000, "c": "Remeras"}, {"p": "Camisa negra hym", "t": "34", "m": 20000, "c": "Remeras"}, {"p": "Remera manga princesa negra", "t": "Único", "m": 15000, "c": "Remeras"}, {"p": "Remera morley negra manga larga", "t": "Único", "m": 10000, "c": "Remeras"}, {"p": "Remera puma verde", "t": "M", "m": 20000, "c": "Remeras"}, {"p": "Remera blanca ángeles", "t": "Dl", "m": 12000, "c": "Remeras"}, {"p": "Remera negra gallery dept", "t": "L", "m": 10000, "c": "Remeras"}, {"p": "Remera gris pullandbear", "t": "M", "m": 20000, "c": "Remeras"}, {"p": "Camisa negra hym", "t": "34", "m": 20000, "c": "Remeras"}, {"p": "Set yoga rosa", "t": "S", "m": 30000, "c": "Set"}, {"p": "Mono gris gym", "t": "XL", "m": 20000, "c": "Set"}, {"p": "Set deportivo PINK", "t": "S", "m": 20000, "c": "Set"}, {"p": "Short cuero", "t": "Talle 2", "m": 10000, "c": "Shorts"}, {"p": "Short pollera negro pyschic", "t": "36", "m": 20000, "c": "Shorts"}, {"p": "short beige y blanco rallas", "t": "M", "m": 15000, "c": "Shorts"}, {"p": "Short rayas beige y blanco", "t": "M", "m": 15000, "c": "Shorts"}, {"p": "Short delaostia animal print", "t": "S", "m": 15000, "c": "Shorts"}, {"p": "Short pollera azul", "t": "38", "m": 15000, "c": "Shorts"}, {"p": "L'Oréal glycolic crema noche", "t": "", "m": 20000, "c": "Skincare"}, {"p": "L'Oréal glycolic serum", "t": "", "m": 20000, "c": "Skincare"}, {"p": "L'Oréal glycolic serum", "t": "", "m": 20000, "c": "Skincare"}, {"p": "Seoul 1988 repair crema", "t": "", "m": 35000, "c": "Skincare"}, {"p": "Seoul 1988 serum retínal", "t": "", "m": 25000, "c": "Skincare"}, {"p": "Seoul 1988 avanced shot retinal", "t": "", "m": 25000, "c": "Skincare"}, {"p": "L'Oréal UV defender", "t": "", "m": 15000, "c": "Skincare"}, {"p": "L'Oréal UV defender", "t": "", "m": 15000, "c": "Skincare"}, {"p": "loreal elvive óleo", "t": "", "m": 10000, "c": "Skincare"}, {"p": "L'Oréal elvive óleo", "t": "", "m": 10000, "c": "Skincare"}, {"p": "Doce mascarilla UV", "t": "", "m": 10000, "c": "Skincare"}, {"p": "Perfume Pepe jeans vintage vives", "t": "", "m": 15000, "c": "Skincare"}, {"p": "Base L'Oréal x mugler", "t": "", "m": 30000, "c": "Skincare"}, {"p": "Top negro manga princesa", "t": "Único", "m": 12000, "c": "Top"}, {"p": "Top blanco buche", "t": "", "m": 20000, "c": "Top"}, {"p": "top destroy negro", "t": "2", "m": 18900, "c": "Top"}, {"p": "Top everlast rosa", "t": "M", "m": 10000, "c": "Top"}, {"p": "top negro princesa broche", "t": "único", "m": 10000, "c": "Top"}, {"p": "Top corset dorado ZARA", "t": "XS", "m": 20000, "c": "Top"}, {"p": "Top NIKE negro", "t": "M", "m": 5000, "c": "Top"}, {"p": "Top gris corazón rojo", "t": "Único", "m": 10000, "c": "Top"}, {"p": "Top blanco encaje hebilla dorado", "t": "M", "m": 15000, "c": "Top"}, {"p": "Vestido rojo volado", "t": "Único", "m": 15000, "c": "Vestidos"}, {"p": "Vestido brillo corto", "t": "Único", "m": 15000, "c": "Vestidos"}, {"p": "vestido marrón strapples volado", "t": "Único", "m": 25000, "c": "Vestidos"}, {"p": "zapatillas vans verdes", "t": "37", "m": 40000, "c": "Zapatos"}, {"p": "Zapatos rojos charol", "t": "37", "m": 20000, "c": "Zapatos"}, {"p": "Texanas negras cortas", "t": "37", "m": 25000, "c": "Zapatos"}, {"p": "Bikini entera negra MMBI", "t": "3", "m": 30000, "c": "Sin categoria"}, {"p": "Bikini celeste MMBI", "t": "2", "m": 30000, "c": "Sin categoria"}, {"p": "bikini entera negra MMBI", "t": "3", "m": 30000, "c": "Sin categoria"}, {"p": "Zapatos Sofía sarkany rosa y blanco", "t": "37", "m": 40000, "c": "Zapatos"}, {"p": "Zapatos sarkany naranjas", "t": "38", "m": 20000, "c": "Zapatos"}, {"p": "Zapatos Sofía sarkany negros brillo", "t": "37", "m": 50000, "c": "Zapatos"}, {"p": "Cartera blanca XL", "t": "", "m": 15000, "c": "Accesorios"}, {"p": "Cartera marrón grande hebilla", "t": "", "m": 30000, "c": "Accesorios"}, {"p": "Blusa uniqlo azul", "t": "Xs", "m": 15000, "c": "Remeras"}, {"p": "Pollera short azul", "t": "S", "m": 10000, "c": "Polleras"}, {"p": "Pollera RÍE colorida", "t": "38", "m": 17000, "c": "Polleras"}, {"p": "Remera Palm ángels", "t": "1", "m": 50000, "c": "Remeras"}, {"p": "Blusa delaostia verde", "t": "3", "m": 35000, "c": "Remeras"}, {"p": "Blusa brillos akira", "t": "S", "m": 70000, "c": "Remeras"}, {"p": "Remera roja torre eifel gap", "t": "S", "m": 5000, "c": "Remeras"}, {"p": "Remera forever 21 negra", "t": "S", "m": 5000, "c": "Remeras"}, {"p": "Remera forever 21 estampada", "t": "S", "m": 8000, "c": "Remeras"}, {"p": "Remera azul sin mangas entrenar", "t": "S", "m": 8000, "c": "Remeras"}, {"p": "Camisa rayas HYM", "t": "XS", "m": 18000, "c": "Remeras"}, {"p": "Camisa complot", "t": "M", "m": 16000, "c": "Remeras"}, {"p": "Camisa blanca forever", "t": "S", "m": 20000, "c": "Remeras"}, {"p": "Remera manga corta entrenar lila", "t": "Xs", "m": 15000, "c": "Remeras"}, {"p": "top nike negro tiras", "t": "Xs", "m": 10000, "c": "Top"}, {"p": "Piluso Adidas camuflado", "t": "", "m": 12000, "c": "Accesorios"}, {"p": "Malla magenta", "t": "1", "m": 10000, "c": "Sin categoria"}, {"p": "Zapatos auja DKNY marrones", "t": "36", "m": 15000, "c": "Zapatos"}, {"p": "Bandolera Armani negra", "t": "", "m": 30000, "c": "Accesorios"}, {"p": "Vestido negro pana Zara", "t": "S", "m": 20000, "c": "Vestidos"}, {"p": "Blazer gris zara", "t": "Xs", "m": 40000, "c": "Abrigos"}, {"p": "Blazer rojo Zara", "t": "Xs", "m": 40000, "c": "Abrigos"}, {"p": "Top gris deportivo", "t": "S", "m": 8000, "c": "Top"}, {"p": "Pantalón verde forever", "t": "S", "m": 12000, "c": "Pantalon"}, {"p": "Jean banana república", "t": "24", "m": 0, "c": "Pantalon"}, {"p": "Pollera azul larga primark", "t": "4", "m": 10000, "c": "Polleras"}, {"p": "Bikini colorida shein", "t": "S", "m": 8000, "c": "Sin categoria"}, {"p": "Bikini azul y rojo", "t": "4", "m": 8000, "c": "Sin categoria"}, {"p": "bikini negra engomada mmbi", "t": "2 y 3", "m": 25000, "c": "Sin categoria"}, {"p": "gorra azul but first", "t": "", "m": 12000, "c": "Accesorios"}, {"p": "gorra girl mmbi naranja", "t": "", "m": 12000, "c": "Accesorios"}, {"p": "Jean corto Zara", "t": "4", "m": 20000, "c": "Pantalon"}, {"p": "Botas gamuza primark", "t": "36", "m": 20000, "c": "Zapatos"}, {"p": "Tacos gamuza negros", "t": "6", "m": 16000, "c": "Zapatos"}, {"p": "Sandalias primark negras abrojo", "t": "37", "m": 12000, "c": "Zapatos"}, {"p": "Cinturón plumas negro", "t": "", "m": 8000, "c": "Accesorios"}, {"p": "Campera cuero roja", "t": "M", "m": 60000, "c": "Abrigos"}, {"p": "Blusa akira rosa", "t": "S", "m": 50000, "c": "Remeras"}, {"p": "Sweater Zara marrón", "t": "S", "m": 15000, "c": "Abrigos"}, {"p": "Cinturón negro", "t": "", "m": 5000, "c": "Accesorios"}, {"p": "Zapatillas Adidas", "t": "36", "m": 42000, "c": "Zapatos"}, {"p": "Cartera tachas negra", "t": "", "m": 30000, "c": "Accesorios"}, {"p": "Pantalón brillos Maria Antonieta", "t": "S", "m": 20000, "c": "Pantalon"}, {"p": "Jean marrón ketupe", "t": "L", "m": 20000, "c": "Pantalon"}, {"p": "Jean azul oscuro Ay not dead", "t": "24", "m": 12000, "c": "Pantalon"}, {"p": "Calza lurex negra Ona Saez", "t": "S", "m": 10000, "c": "Pantalon"}, {"p": "Pantalon negro 47 street", "t": "1", "m": 10000, "c": "Pantalon"}, {"p": "Jean celeste Zara", "t": "36", "m": 30000, "c": "Pantalon"}, {"p": "Pantalon cargo de cuero negro", "t": "S", "m": 10000, "c": "Pantalon"}, {"p": "Pollera cuero negra blossie", "t": "S", "m": 6000, "c": "Polleras"}, {"p": "Pollera negra Dstroy", "t": "M", "m": 8000, "c": "Polleras"}, {"p": "Short brilloso gris", "t": "S", "m": 5000, "c": "Shorts"}, {"p": "Short cuero negro con cordones", "t": "M", "m": 5000, "c": "Shorts"}, {"p": "Short gris 47 street", "t": "1", "m": 7000, "c": "Shorts"}, {"p": "Top encaje negro Deside of love", "t": "M", "m": 15000, "c": "Lenceria"}, {"p": "Top blanco con estampa corpiño gris", "t": "S", "m": 6000, "c": "Top"}, {"p": "Top irregular blanco (musculosa)", "t": "2", "m": 5000, "c": "Top"}, {"p": "Top cut out adelante blanco", "t": "M", "m": 6000, "c": "Top"}, {"p": "Top irregular naranja Lovely denim", "t": "S", "m": 5000, "c": "Top"}, {"p": "Top negro irregular cuello alto (musculosa)", "t": "S", "m": 5000, "c": "Top"}, {"p": "Top punto rosa Zara", "t": "S", "m": 15000, "c": "Top"}, {"p": "Top corpiño Victoria Tucci blanco", "t": "1", "m": 10000, "c": "Top"}, {"p": "Top manga larga negro frunce pecho", "t": "S", "m": 6000, "c": "Top"}, {"p": "Top polera negro Dstroy", "t": "S", "m": 12000, "c": "Top"}, {"p": "Top bando tul estampado Dstroy", "t": "S", "m": 6000, "c": "Top"}, {"p": "Top manga corta con tiras Zara blanco", "t": "S", "m": 10000, "c": "Top"}, {"p": "Top negro recorte hombro manga larga", "t": "S", "m": 5000, "c": "Top"}, {"p": "Top waffle blanco hombro caido", "t": "40", "m": 5000, "c": "Top"}, {"p": "Top corpiño negro satinado", "t": "M", "m": 5000, "c": "Top"}, {"p": "Top negro manga larga cuello alto", "t": "S", "m": 7000, "c": "Top"}, {"p": "Top jean con botones", "t": "S", "m": 10000, "c": "Top"}, {"p": "Top blanco manga larga cuello alto", "t": "S", "m": 7000, "c": "Top"}, {"p": "Body blanco básico (con etiqueta)", "t": "S", "m": 7000, "c": "Body"}, {"p": "Remera verde neón Delaostia un hombro", "t": "S", "m": 8000, "c": "Remeras"}, {"p": "Remera blanca con estampa negra \"Jaded Archives\"", "t": "S", "m": 6000, "c": "Remeras"}, {"p": "Catsuit estampado tul Dstroy", "t": "S", "m": 12000, "c": "Catsuit"}, {"p": "Vestido corto blanco Dstroy", "t": "S", "m": 10000, "c": "Vestidos"}, {"p": "Vestido corto azul Blossie", "t": "S", "m": 5000, "c": "Vestidos"}, {"p": "Sweater rosa Zara", "t": "S", "m": 20000, "c": "Abrigos"}, {"p": "Buzo estampa Mickey", "t": "T.U", "m": 10000, "c": "Abrigos"}, {"p": "Sweater gris con cuello alto", "t": "S", "m": 10000, "c": "Abrigos"}, {"p": "Sweater corto verde manzana", "t": "S", "m": 6000, "c": "Abrigos"}, {"p": "Campera marrón/print Ketupe", "t": "L", "m": 20000, "c": "Abrigos"}, {"p": "Buzo negro peluche dentro", "t": "3", "m": 10000, "c": "Abrigos"}, {"p": "Pañuelo negro Dstroy", "t": "U", "m": 8000, "c": "Accesorios"}], "Abi": [{"p": "Campera Cruces", "t": "-", "m": 12000, "c": "Abrigos"}, {"p": "Campera Gamulan", "t": "L", "m": 30000, "c": "Abrigos"}, {"p": "Cardigan Beige( Boton Marron", "t": "-", "m": 15000, "c": "Abrigos"}, {"p": "Sweater Chomba Sol", "t": "-", "m": 15000, "c": "Abrigos"}, {"p": "Buzo Nevado Estampa", "t": "-", "m": 12000, "c": "Abrigos"}, {"p": "Chaleco Escote V Rayado", "t": "-", "m": 15000, "c": "Abrigos"}, {"p": "Chaleco Crochet", "t": "-", "m": 8000, "c": "Abrigos"}, {"p": "Joggin Chile", "t": "L", "m": 10000, "c": "Pantalon"}, {"p": "Bermuda Negra", "t": "44", "m": 12000, "c": "Shorts"}, {"p": "Jean Cargo Negro", "t": "40", "m": 10000, "c": "Pantalon"}, {"p": "Bermuda Jean Clarito", "t": "46", "m": 12000, "c": "Shorts"}, {"p": "Jean Celeste Clarito", "t": "46", "m": 18000, "c": "Pantalon"}, {"p": "Jean Rayado", "t": "46", "m": 16000, "c": "Pantalon"}, {"p": "Jean Psychic Estampa", "t": "42", "m": 15000, "c": "Pantalon"}, {"p": "Jean Mom Celeste Nevado", "t": "46", "m": 22000, "c": "Pantalon"}, {"p": "Body Chocolate Puntilla", "t": "L", "m": 15000, "c": "Body"}, {"p": "Top Marylin Blanco", "t": "XL", "m": 12000, "c": "Top"}, {"p": "Strapless Frunce y Pico Negro", "t": "L", "m": 10000, "c": "Top"}, {"p": "Strapless Cuerina Frunce", "t": "XL", "m": 10000, "c": "Top"}, {"p": "Top Marylin Negro Corto", "t": "XL", "m": 7000, "c": "Top"}, {"p": "Top Chocolate JAHNISI", "t": "XL", "m": 10000, "c": "Top"}, {"p": "Top Abdomen Estampado", "t": "XL", "m": 12000, "c": "Top"}, {"p": "Top Blanco Victoria Secret", "t": "XL", "m": 12000, "c": "Top"}, {"p": "Blusa Lencera Puntilla", "t": "-", "m": 8000, "c": "Top"}, {"p": "Polera Metalizada Plata", "t": "M", "m": 8000, "c": "Remeras"}, {"p": "Top Negro Tachas Atado", "t": "-", "m": 15000, "c": "Top"}, {"p": "Remera Gris Value", "t": "-", "m": 5000, "c": "Remeras"}, {"p": "Remera Negra Lentejuealas", "t": "L", "m": 10000, "c": "Remeras"}, {"p": "Remera Over 4 Estrellas y Letras", "t": "L", "m": 10000, "c": "Remeras"}, {"p": "Remera Dportiva Gris", "t": "XL", "m": 8000, "c": "Remeras"}, {"p": "Remera Rayada Sol de Mayo", "t": "-", "m": 10000, "c": "Remeras"}, {"p": "Camisa Volados y Puño Beige", "t": "L", "m": 20000, "c": "Remeras"}, {"p": "Remera Save The Drama", "t": "-", "m": 5000, "c": "Remeras"}, {"p": "Musculosa Verde y Blanco", "t": "-", "m": 5000, "c": "Remeras"}, {"p": "BabyTee Tussy", "t": "M", "m": 20000, "c": "Remeras"}, {"p": "Remera Deportiva Negra Madfit", "t": "M", "m": 7000, "c": "Remeras"}, {"p": "Remeron Red Pieta", "t": "-", "m": 10000, "c": "Remeras"}, {"p": "Remera Manga Princesa Tull", "t": "-", "m": 8000, "c": "Remeras"}, {"p": "Musculosa Morley Canutillos", "t": "-", "m": 7000, "c": "Remeras"}, {"p": "Remera Basica Beige Pieta", "t": "XL", "m": 6000, "c": "Remeras"}, {"p": "Babytee Sombrerito", "t": "L", "m": 5000, "c": "Remeras"}, {"p": "Camisa Chocolate ZULA", "t": "XL", "m": 15000, "c": "Remeras"}, {"p": "Vestido Negro Largo Seda", "t": "-", "m": 15000, "c": "Vestidos"}, {"p": "Pollera Cuero Trenzado ZULA", "t": "XXL", "m": 15000, "c": "Polleras"}, {"p": "Calza Recta Chocolate JAHNISI", "t": "XL", "m": 15000, "c": "Pantalon"}, {"p": "Brazalete Ocre Arandela", "t": "-", "m": 4000, "c": "Accesorios"}, {"p": "Brazaete Zebra Tachas", "t": "-", "m": 4000, "c": "Accesorios"}, {"p": "Brazalete V Plata", "t": "-", "m": 4000, "c": "Accesorios"}, {"p": "Cartera Bordo", "t": "-", "m": 30000, "c": "Accesorios"}, {"p": "Mini Bag Chocolate", "t": "-", "m": 15000, "c": "Accesorios"}, {"p": "Borcego", "t": "38", "m": 25000, "c": "Accesorios"}, {"p": "Buzo Capucha Corazon Espina", "t": "-", "m": 15000, "c": "Abrigos"}, {"p": "Cinto Clasico Negro", "t": "-", "m": 5000, "c": "Accesorios"}, {"p": "Cinto Toro Chocolate", "t": "-", "m": 5000, "c": "Accesorios"}, {"p": "Cinturon Tachas", "t": "-", "m": 7000, "c": "Accesorios"}, {"p": "Faja Circular Tachas", "t": "-", "m": 7000, "c": "Accesorios"}, {"p": "Cinto Finito Tachitas", "t": "-", "m": 7000, "c": "Accesorios"}]};
+var SELLERS=Object.keys(DATA);
+var fmt=function(n){return '$'+(n||0).toLocaleString('es-AR');};
+SELLERS.forEach(function(s){DATA[s].forEach(function(it,i){it.id=s+'#'+i;it.seller=s;});});
+var BYID={};
+SELLERS.forEach(function(s){DATA[s].forEach(function(it){BYID[it.id]=it;});});
+// price overrides: id -> new price
+var priceOverrides={};
+
+var sold={},gastosLibres=[],custom=[],cart=[],pago='Efectivo';
+var current='DASH',q='',catFilter='Todas',estadoFilter='Todos';
+var mainEl=document.getElementById('main');
+var tabsEl=document.getElementById('tabs');
+
+function syncStatus(state,msg){
+  document.getElementById('syncDot').className='dot '+state;
+  document.getElementById('syncTxt').textContent=msg;
+}
+function getPrice(it){ return priceOverrides[it.id]!==undefined ? priceOverrides[it.id] : it.m; }
+
+function apiH(extra){return Object.assign({'Content-Type':'application/json','apikey':SKEY,'Authorization':'Bearer '+SKEY},extra||{});}
+function apiFetch(path,opts){return fetch(SURL+'/rest/v1/'+path,Object.assign({headers:apiH()},opts||{}));}
+
+function loadAll(){
+  return Promise.all([
+    apiFetch('ventas?select=*').then(function(r){return r.json();}),
+    apiFetch('gastos?select=*').then(function(r){return r.json();}),
+    apiFetch('productos_custom?select=*').then(function(r){return r.json();}),
+    apiFetch('price_overrides?select=*').then(function(r){return r.json();})
+  ]).then(function(res){
+    sold={};
+    (res[0]||[]).forEach(function(v){sold[v.id]={pago:v.pago,fecha:v.fecha};});
+    gastosLibres=(res[1]||[]).map(function(g){return{gid:g.gid,nombre:g.nombre,monto:g.monto};});
+    applyCustom(res[2]||[]);
+    priceOverrides={};
+    (res[3]||[]).forEach(function(p){priceOverrides[p.id]=p.precio;});
+    syncStatus('ok','Sincronizado · tiempo real activo');
+    render();
+    startRealtime();
+  }).catch(function(e){
+    // price_overrides table might not exist yet - load without it
+    Promise.all([
+      apiFetch('ventas?select=*').then(function(r){return r.json();}),
+      apiFetch('gastos?select=*').then(function(r){return r.json();}),
+      apiFetch('productos_custom?select=*').then(function(r){return r.json();})
+    ]).then(function(res){
+      sold={};
+      (res[0]||[]).forEach(function(v){sold[v.id]={pago:v.pago,fecha:v.fecha};});
+      gastosLibres=(res[1]||[]).map(function(g){return{gid:g.gid,nombre:g.nombre,monto:g.monto};});
+      applyCustom(res[2]||[]);
+      syncStatus('ok','Sincronizado');
+      render();
+      startRealtime();
+    }).catch(function(e2){syncStatus('err','Error: '+e2.message);render();});
+  });
+}
+
+function applyCustom(rows){
+  SELLERS.forEach(function(s){DATA[s]=DATA[s].filter(function(it){return !it.custom;});});
+  Object.keys(BYID).forEach(function(k){if(BYID[k]&&BYID[k].custom)delete BYID[k];});
+  custom=rows;
+  custom.forEach(function(it){
+    it.custom=true;
+    if(DATA[it.seller]&&!BYID[it.id]){DATA[it.seller].push(it);BYID[it.id]=it;}
+  });
+}
+
+function startRealtime(){
+  sb.channel('feria_v2')
+    .on('postgres_changes',{event:'*',schema:'public',table:'ventas'},function(p){
+      if(p.eventType==='DELETE')delete sold[p.old.id];
+      else sold[p.new.id]={pago:p.new.pago,fecha:p.new.fecha};
+      render();
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'gastos'},function(){
+      apiFetch('gastos?select=*').then(function(r){return r.json();}).then(function(rows){
+        gastosLibres=rows.map(function(g){return{gid:g.gid,nombre:g.nombre,monto:g.monto};});
+        render();
+      });
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'productos_custom'},function(){
+      apiFetch('productos_custom?select=*').then(function(r){return r.json();}).then(function(rows){
+        applyCustom(rows);render();
+      });
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'price_overrides'},function(p){
+      if(p.eventType==='DELETE')delete priceOverrides[p.old.id];
+      else priceOverrides[p.new.id]=p.new.precio;
+      render();
+    })
+    .subscribe();
+}
+
+// DB writes
+function dbSell(ids,pagoVal){
+  var fecha=new Date().toISOString();
+  apiFetch('ventas',{method:'POST',headers:apiH({'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify(ids.map(function(id){return{id:id,pago:pagoVal,fecha:fecha};}))});
+}
+function dbUnsell(id){apiFetch('ventas?id=eq.'+encodeURIComponent(id),{method:'DELETE'});}
+function dbSaveGasto(g){
+  apiFetch('gastos',{method:'POST',headers:apiH({'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify([{gid:g.gid,nombre:g.nombre,monto:g.monto||0}])});
+}
+function dbDeleteGasto(gid){apiFetch('gastos?gid=eq.'+encodeURIComponent(gid),{method:'DELETE'});}
+function dbSaveCustom(it){
+  apiFetch('productos_custom',{method:'POST',headers:apiH({'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify([{id:it.id,seller:it.seller,p:it.p,t:it.t,m:it.m,c:it.c}])});
+}
+function dbSavePrice(id,precio){
+  apiFetch('price_overrides',{method:'POST',headers:apiH({'Prefer':'resolution=merge-duplicates'}),
+    body:JSON.stringify([{id:id,precio:precio}])});
+}
+function dbDeletePrice(id){apiFetch('price_overrides?id=eq.'+encodeURIComponent(id),{method:'DELETE'});}
+
+// Stats
+function sellerStats(s){
+  var vend=0,eft=0,tr=0,total=0;
+  DATA[s].forEach(function(it){
+    var st=sold[it.id];
+    if(st){vend++;var p=getPrice(it);total+=p;if(st.pago==='Efectivo')eft+=p;else tr+=p;}
+  });
+  return{vend:vend,eft:eft,tr:tr,total:total};
+}
+function globalStats(){
+  var g={vend:0,eft:0,tr:0,total:0};
+  SELLERS.forEach(function(s){var x=sellerStats(s);g.vend+=x.vend;g.eft+=x.eft;g.tr+=x.tr;g.total+=x.total;});
+  return g;
+}
+function totalGastos(){return gastosLibres.reduce(function(a,g){return a+(+g.monto||0);},0);}
+function initials(s){return s.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Render
+function render(){renderTabs();renderCart();current==='DASH'?renderDash():renderSeller(current);}
+
+function renderTabs(){
+  tabsEl.innerHTML='';
+  function mk(id,lbl,n){
+    var b=document.createElement('button');
+    b.className='tab'+(current===id?' active':'');
+    b.innerHTML=lbl+(n!=null?'<span class="pill">'+n+'</span>':'');
+    b.onclick=function(){current=id;q='';catFilter='Todas';estadoFilter='Todos';render();};
+    tabsEl.appendChild(b);
+  }
+  mk('DASH','Panel',null);
+  SELLERS.forEach(function(s){mk(s,s+' ',DATA[s].length);});
+}
+
+function renderDash(){
+  var g=globalStats(),tg=totalGastos();
+  var h='<div class="sellerhead"><div><h2>Panel de la feria</h2>'
+    +'<div class="meta">'+SELLERS.length+' vendedoras &middot; '+SELLERS.reduce(function(a,s){return a+DATA[s].length;},0)+' productos</div></div>'
+    +'<div class="minis">'
+    +'<div class="mini"><div class="lbl">Vendidas</div><div class="val">'+g.vend+'</div></div>'
+    +'<div class="mini eft"><div class="lbl">Efectivo</div><div class="val">'+fmt(g.eft)+'</div></div>'
+    +'<div class="mini tr"><div class="lbl">Transfer.</div><div class="val">'+fmt(g.tr)+'</div></div>'
+    +'<div class="mini"><div class="lbl">Total</div><div class="val">'+fmt(g.total)+'</div></div>'
+    +'</div></div>';
+  h+='<div class="dashgrid">';
+  SELLERS.forEach(function(s){
+    var x=sellerStats(s);
+    h+='<div class="dcard"><div class="dh"><div class="av">'+initials(s)+'</div><h3>'+s+'</h3></div>'
+      +'<div class="drow"><span class="k">Vendidas</span><span class="vv">'+x.vend+'</span></div>'
+      +'<div class="drow"><span class="k">Efectivo</span><span class="vv">'+fmt(x.eft)+'</span></div>'
+      +'<div class="drow"><span class="k">Transferencia</span><span class="vv">'+fmt(x.tr)+'</span></div>'
+      +'<div class="drow tot"><span class="k">Total</span><span class="vv">'+fmt(x.total)+'</span></div></div>';
+  });
+  h+='</div><div class="dashgrid" style="grid-template-columns:1fr 1fr">';
+  h+='<div class="gastos-box"><h3>Gastos de la feria</h3>';
+  gastosLibres.forEach(function(gx,i){
+    h+='<div class="gline"><input class="gln" type="text" data-gnom="'+i+'" value="'+esc(gx.nombre||'')+'" placeholder="Que gasto?">'
+      +'<input class="gnum" type="number" min="0" data-gmonto="'+i+'" value="'+(gx.monto||'')+'" placeholder="0">'
+      +'<button class="gldel" data-gdel="'+i+'">&#215;</button></div>';
+  });
+  h+='<button class="addline" id="addGasto">+ Agregar gasto</button>';
+  h+='<div class="drow tot"><span class="k">Total gastos</span><span class="vv" id="totGastos">'+fmt(tg)+'</span></div></div>';
+  h+='<div class="gastos-box"><h3>Cierre de caja</h3>'
+    +'<div class="drow"><span class="k">Cobrado en efectivo</span><span class="vv">'+fmt(g.eft)+'</span></div>'
+    +'<div class="drow"><span class="k">Cobrado en transferencia</span><span class="vv">'+fmt(g.tr)+'</span></div>'
+    +'<div class="drow"><span class="k">Gastos</span><span class="vv" id="cierreGastos">-'+fmt(tg)+'</span></div>'
+    +'<div class="drow tot"><span class="k">Caja final (efectivo - gastos)</span><span class="vv" id="cierreCaja">'+fmt(g.eft-tg)+'</span></div>'
+    +'<div class="drow tot"><span class="k">Venta total</span><span class="vv">'+fmt(g.total)+'</span></div></div>';
+  h+='</div><div style="margin-top:10px"><button class="expbtn" id="exp">Exportar ventas (CSV)</button></div>';
+  mainEl.innerHTML=h;
+  mainEl.querySelectorAll('[data-gnom]').forEach(function(inp){
+    inp.oninput=function(){gastosLibres[+inp.dataset.gnom].nombre=inp.value;dbSaveGasto(gastosLibres[+inp.dataset.gnom]);};
+  });
+  mainEl.querySelectorAll('[data-gmonto]').forEach(function(inp){
+    inp.oninput=function(){
+      gastosLibres[+inp.dataset.gmonto].monto=+inp.value||0;dbSaveGasto(gastosLibres[+inp.dataset.gmonto]);
+      var tg2=totalGastos(),g2=globalStats();
+      var e=document.getElementById('totGastos');if(e)e.textContent=fmt(tg2);
+      var f=document.getElementById('cierreGastos');if(f)f.textContent='-'+fmt(tg2);
+      var c=document.getElementById('cierreCaja');if(c)c.textContent=fmt(g2.eft-tg2);
+    };
+  });
+  mainEl.querySelectorAll('[data-gdel]').forEach(function(b){
+    b.onclick=function(){var gx=gastosLibres[+b.dataset.gdel];dbDeleteGasto(gx.gid);gastosLibres.splice(+b.dataset.gdel,1);renderDash();};
+  });
+  document.getElementById('addGasto').onclick=function(){
+    var gasto={gid:'g'+Date.now(),nombre:'',monto:0};
+    gastosLibres.push(gasto);dbSaveGasto(gasto);renderDash();
+    setTimeout(function(){var els=mainEl.querySelectorAll('[data-gnom]');if(els.length)els[els.length-1].focus();},30);
+  };
+  document.getElementById('exp').onclick=exportCSV;
+}
+
+function renderSeller(s){
+  var x=sellerStats(s);
+  var uniqueCats=[];
+  DATA[s].forEach(function(i){if(uniqueCats.indexOf(i.c)===-1)uniqueCats.push(i.c);});
+  uniqueCats.sort();
+  var cats=['Todas'].concat(uniqueCats);
+  var h='<div class="sellerhead"><div class="avatar">'+initials(s)+'</div>'
+    +'<div><h2>'+s+'</h2><div class="meta">'+DATA[s].length+' productos &middot; '+x.vend+' vendidos</div></div>'
+    +'<div class="minis">'
+    +'<div class="mini"><div class="lbl">Vendidas</div><div class="val">'+x.vend+'</div></div>'
+    +'<div class="mini eft"><div class="lbl">Efectivo</div><div class="val">'+fmt(x.eft)+'</div></div>'
+    +'<div class="mini tr"><div class="lbl">Transfer.</div><div class="val">'+fmt(x.tr)+'</div></div>'
+    +'<div class="mini"><div class="lbl">Total</div><div class="val">'+fmt(x.total)+'</div></div>'
+    +'</div></div>';
+  h+='<div class="toolbar">'
+    +'<div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>'
+    +'<input id="srch" placeholder="Buscar prenda..." value="'+q.replace(/"/g,'&quot;')+'"></div>'
+    +'<div class="filtros">'
+    +cats.map(function(c){return'<button class="chip'+(catFilter===c?' on':'')+'" data-cat="'+c+'">'+c+'</button>';}).join('')
+    +'<button class="chip estado'+(estadoFilter==='Disponibles'?' on':'')+'" data-est="Disponibles">En stock</button>'
+    +'<button class="chip estado'+(estadoFilter==='Vendidos'?' on':'')+'" data-est="Vendidos">Vendidos</button>'
+    +'</div><button class="addprod" id="addProd">+ Agregar producto</button></div>';
+  h+='<div class="prodform" id="prodForm"><div class="pf-grid">'
+    +'<div class="pf-field" style="grid-column:1/-1"><label>Nombre del producto</label><input id="pfNom" placeholder="Ej: Campera de jean"></div>'
+    +'<div class="pf-field"><label>Talle (opcional)</label><input id="pfTalle" placeholder="Ej: M"></div>'
+    +'<div class="pf-field"><label>Categoria</label><input id="pfCat" placeholder="Ej: Abrigos" list="catList"></div>'
+    +'<datalist id="catList">'+uniqueCats.map(function(c){return'<option value="'+esc(c)+'">';}).join('')+'</datalist>'
+    +'<div class="pf-field"><label>Precio</label><input id="pfPrecio" type="number" min="0" placeholder="0"></div>'
+    +'<div class="pf-field"><label>Vendedora</label><input value="'+esc(s)+'" disabled></div>'
+    +'</div><div class="pf-actions"><button class="pf-save" id="pfSave">Guardar producto</button>'
+    +'<button class="pf-cancel" id="pfCancel">Cancelar</button></div></div>';
+  var ql=q.toLowerCase();
+  var items=DATA[s].filter(function(it){return(catFilter==='Todas'||it.c===catFilter)&&it.p.toLowerCase().indexOf(ql)!==-1;});
+  if(estadoFilter==='Disponibles')items=items.filter(function(it){return!sold[it.id];});
+  if(estadoFilter==='Vendidos')items=items.filter(function(it){return sold[it.id];});
+  h+=items.length?'<div class="grid">'+items.map(cardHTML).join('')+'</div>'
+    :'<div class="empty"><div class="big">Sin resultados</div>Proba con otra busqueda o filtro.</div>';
+  mainEl.innerHTML=h;
+  bindSeller(s);
+}
+
+function cardHTML(it){
+  var isSold=!!sold[it.id],inCart=cart.indexOf(it.id)!==-1;
+  var precio=getPrice(it);
+  var hasOverride=priceOverrides[it.id]!==undefined;
+  return'<div class="item'+(isSold?' vendido':'')+(inCart?' incart':'')+'" data-id="'+it.id+'">'
+    +(isSold?'':'<button class="editbtn" data-edit="'+it.id+'" title="Editar precio">&#9998;</button>')
+    +'<div class="nom">'+esc(it.p)+'</div>'
+    +'<div class="det">'+(it.t?'<span class="badge">'+esc(it.t)+'</span>':'')
+    +'<span class="badge cat">'+esc(it.c)+'</span>'
+    +(it.custom?'<span class="badge nuevo">Agregado</span>':'')
+    +(hasOverride?'<span class="badge nuevo">Precio modificado</span>':'')
+    +(isSold?'<span class="badge sold">&#10003; Vendido &middot; sin stock</span>':'')
+    +'</div>'
+    +(isSold?'<div class="soldby">Pagado en '+sold[it.id].pago.toLowerCase()+'</div>':'')
+    // edit form (hidden by default)
+    +'<div class="editform" id="ef-'+it.id+'">'
+    +'<div class="editrow"><label>Precio</label><input type="number" min="0" id="ep-'+it.id+'" value="'+precio+'"></div>'
+    +'<div class="editactions">'
+    +'<button class="savebtn" data-save="'+it.id+'">Guardar</button>'
+    +(hasOverride?'<button class="cancelbtn" data-reset="'+it.id+'">Restaurar original</button>':'<button class="cancelbtn" data-closeedit="'+it.id+'">Cancelar</button>')
+    +'</div></div>'
+    +'<div class="foot"><span class="precio">'+fmt(precio)+'</span>'
+    +(isSold
+      ?'<button class="add undo" data-act="undo">Deshacer venta</button>'
+      :inCart
+        ?'<button class="add incart" data-act="remove">&#10003; En carrito</button>'
+        :'<button class="add" data-act="add">Agregar</button>')
+    +'</div></div>';
+}
+
+function bindSeller(s){
+  var srch=document.getElementById('srch');
+  if(srch)srch.oninput=function(){q=srch.value;var p=srch.selectionStart;renderSeller(s);
+    var n=document.getElementById('srch');if(n){n.focus();n.setSelectionRange(p,p);}};
+  mainEl.querySelectorAll('.chip[data-cat]').forEach(function(c){c.onclick=function(){catFilter=c.dataset.cat;renderSeller(s);};});
+  mainEl.querySelectorAll('.chip[data-est]').forEach(function(c){c.onclick=function(){estadoFilter=(estadoFilter===c.dataset.est?'Todos':c.dataset.est);renderSeller(s);};});
+
+  // edit price buttons
+  mainEl.querySelectorAll('.editbtn[data-edit]').forEach(function(b){
+    b.onclick=function(e){
+      e.stopPropagation();
+      var id=b.dataset.edit;
+      var ef=document.getElementById('ef-'+id);
+      ef.classList.toggle('open');
+      if(ef.classList.contains('open'))document.getElementById('ep-'+id).focus();
+    };
+  });
+  mainEl.querySelectorAll('.savebtn[data-save]').forEach(function(b){
+    b.onclick=function(){
+      var id=b.dataset.save;
+      var inp=document.getElementById('ep-'+id);
+      var newPrice=+inp.value||0;
+      if(newPrice<=0){toast('Precio invalido');return;}
+      priceOverrides[id]=newPrice;
+      dbSavePrice(id,newPrice);
+      toast('Precio actualizado en todos los dispositivos');
+      renderSeller(s);
+    };
+  });
+  mainEl.querySelectorAll('.cancelbtn[data-reset]').forEach(function(b){
+    b.onclick=function(){
+      var id=b.dataset.reset;
+      delete priceOverrides[id];
+      dbDeletePrice(id);
+      toast('Precio restaurado al original');
+      renderSeller(s);
+    };
+  });
+  mainEl.querySelectorAll('.cancelbtn[data-closeedit]').forEach(function(b){
+    b.onclick=function(){document.getElementById('ef-'+b.dataset.closeedit).classList.remove('open');};
+  });
+
+  mainEl.querySelectorAll('.item').forEach(function(card){
+    var id=card.dataset.id,btn=card.querySelector('[data-act]');
+    if(!btn)return;
+    btn.onclick=function(){
+      var act=btn.dataset.act;
+      if(act==='add'){cart.push(id);toast('Agregado a la compra');}
+      else if(act==='remove'){cart=cart.filter(function(x){return x!==id;});}
+      else if(act==='undo'){dbUnsell(id);delete sold[id];toast('Venta deshecha');}
+      renderSeller(s);renderCart();
+    };
+  });
+  var addBtn=document.getElementById('addProd'),form=document.getElementById('prodForm');
+  addBtn.onclick=function(){form.classList.toggle('open');if(form.classList.contains('open'))document.getElementById('pfNom').focus();};
+  document.getElementById('pfCancel').onclick=function(){form.classList.remove('open');};
+  document.getElementById('pfSave').onclick=function(){
+    var nom=document.getElementById('pfNom').value.trim();
+    var precio=+document.getElementById('pfPrecio').value||0;
+    if(!nom){toast('Pone un nombre al producto');return;}
+    if(precio<=0){toast('Pone un precio valido');return;}
+    var it={id:'custom#'+Date.now()+'#'+Math.random().toString(36).slice(2,5),
+      seller:s,p:nom,t:document.getElementById('pfTalle').value.trim(),
+      m:precio,c:document.getElementById('pfCat').value.trim()||'Sin categoria',custom:true};
+    custom.push(it);DATA[s].push(it);BYID[it.id]=it;
+    dbSaveCustom(it);toast('Producto agregado a '+s);renderSeller(s);renderCart();
+  };
+}
+
+function renderCart(){
+  var items=cart.map(function(id){return BYID[id];}).filter(Boolean);
+  var tot=items.reduce(function(a,it){return a+getPrice(it);},0);
+  document.getElementById('cartCnt').textContent=items.length;
+  document.getElementById('cartTot').textContent=fmt(tot);
+  document.getElementById('cbCnt').textContent=items.length;
+  document.getElementById('cbTot').textContent=fmt(tot);
+  var box=document.getElementById('cartItems');
+  if(!items.length){
+    box.innerHTML='<div class="cart-empty"><div class="ico">&#128722;</div>Carrito vacio.<br>Agrega productos desde cualquier vendedora.</div>';
+  }else{
+    box.innerHTML=items.map(function(it,i){
+      return'<div class="ci"><div class="cinfo"><div class="cn">'+esc(it.p)+'</div>'
+        +'<div class="cm">'+it.seller+(it.t?' &middot; '+esc(it.t):'')+'</div></div>'
+        +'<span class="cp">'+fmt(getPrice(it))+'</span>'
+        +'<button class="rem" data-i="'+i+'">&#215;</button></div>';
+    }).join('');
+    box.querySelectorAll('.rem').forEach(function(b){
+      b.onclick=function(){cart.splice(+b.dataset.i,1);renderCart();if(current!=='DASH')renderSeller(current);};
+    });
+  }
+  document.getElementById('finBtn').disabled=!items.length;
+}
+
+function finalizar(){
+  if(!cart.length)return;
+  dbSell(cart,pago);
+  cart.forEach(function(id){sold[id]={pago:pago,fecha:new Date().toISOString()};});
+  var n=cart.length,tot=cart.map(function(id){return getPrice(BYID[id]);}).reduce(function(a,b){return a+b;},0);
+  cart=[];
+  toast('Compra cerrada &middot; '+n+' items &middot; '+fmt(tot)+' en '+pago.toLowerCase());
+  closeCart();render();
+}
+
+document.getElementById('finBtn').onclick=finalizar;
+document.getElementById('clearCart').onclick=function(){
+  if(cart.length&&confirm('Vaciar el carrito sin cobrar?')){cart=[];renderCart();if(current!=='DASH')renderSeller(current);}
+};
+document.getElementById('payEft').onclick=function(){setPago('Efectivo');};
+document.getElementById('payTr').onclick=function(){setPago('Transferencia');};
+function setPago(p){pago=p;
+  document.getElementById('payEft').classList.toggle('on',p==='Efectivo');
+  document.getElementById('payTr').classList.toggle('on',p==='Transferencia');
+}
+var cartColEl=document.getElementById('cartCol');
+function openCart(){cartColEl.classList.add('open');}
+function closeCart(){cartColEl.classList.remove('open');}
+document.getElementById('cbOpen').onclick=openCart;
+document.getElementById('cartClose').onclick=closeCart;
+
+var toastT;
+function toast(msg){var t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show');},2400);}
+
+function exportCSV(){
+  var NL='\n';
+  var csv='Vendedora,Producto,Talle,Categoria,Precio original,Precio cobrado,Medio de pago,Fecha'+NL;
+  SELLERS.forEach(function(s){DATA[s].forEach(function(it){var st=sold[it.id];
+    if(st)csv+=[s,'"'+it.p.replace(/"/g,'""')+'"',it.t,it.c,it.m,getPrice(it),st.pago,st.fecha].join(',')+NL;});});
+  csv+=NL+'DETALLE DE GASTOS'+NL;
+  gastosLibres.forEach(function(gx){if(gx.monto)csv+='"'+(gx.nombre||'Gasto').replace(/"/g,'""')+'",'+gx.monto+NL;});
+  var g=globalStats(),tg=totalGastos();
+  csv+=NL+'RESUMEN'+NL+'Prendas vendidas,'+g.vend+NL+'Efectivo,'+g.eft+NL+'Transferencia,'+g.tr+NL
+    +'Gastos,'+tg+NL+'Caja final (efectivo-gastos),'+(g.eft-tg)+NL+'Venta total,'+g.total+NL;
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='mood_closet_ventas_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+render();
+loadAll();
+</script>
+</body>
+</html>
